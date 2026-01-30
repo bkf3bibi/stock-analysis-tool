@@ -154,5 +154,6 @@ elif st.session_state.app_mode == "📈 個股深度分析":
         with c2:
             st.session_state.search_input = st.text_input("輸入代號", st.session_state.search_input).strip()
         with c3:
-            interval = st.selectbox("週期")
+            interval = st.selectbox("週期", ["1d", "1wk", "1mo"])
+
 
