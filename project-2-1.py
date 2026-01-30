@@ -8,6 +8,17 @@ from datetime import timedelta
 
 # 頁面配置
 st.set_page_config(page_title="全球股市 AI 投資助手", layout="wide")
+import streamlit as st
+
+# 隱藏右上角的工具欄與底部的 "Made with Streamlit"
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
 
 # --- 初始化 Session State ---
 if 'app_mode' not in st.session_state:
@@ -223,3 +234,4 @@ elif st.session_state.app_mode == "📈 個股深度分析":
 
    # D:\行銷科技\python\project\project-2-1.py
    #streamlit run project/project-2-1.py
+
