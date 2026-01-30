@@ -32,7 +32,7 @@ hide_st_style = """
             footer {visibility: hidden;}
             </style>
             """
-st.markdown(hide_st_style, unsafe_allow_html=True)True)
+st.markdown(hide_st_style, unsafe_allow_html=True)
 
 
 
@@ -264,6 +264,7 @@ elif st.session_state.app_mode == "📈 個股深度分析":
 
    # D:\行銷科技\python\project\project-2-1.py
    #streamlit run project/project-2-1.py
+
 
 
 
