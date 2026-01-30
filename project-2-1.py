@@ -9,7 +9,7 @@ from datetime import timedelta
 # 頁面配置
 st.set_page_config(page_title="全球股市 AI 投資助手", layout="wide")
 
-# --- 初始化 Session State (確保點擊跳轉功能正常) ---
+# --- 初始化 Session State ---
 if 'app_mode' not in st.session_state:
     st.session_state.app_mode = "🏠 首頁 (漲跌排行榜)"
 if 'search_input' not in st.session_state:
@@ -17,7 +17,7 @@ if 'search_input' not in st.session_state:
 if 'market_type' not in st.session_state:
     st.session_state.market_type = "台股 (TW)"
 
-# --- 1. 邏輯函數：獲取排行榜 (保持原樣) ---
+# --- 1. 邏輯函數：獲取排行榜 ---
 @st.cache_data(ttl=3600)
 def get_market_ranks():
     tw_list = ["2330.TW", "2317.TW", "2454.TW", "2308.TW", "2382.TW", "2881.TW", "2882.TW", 
@@ -56,6 +56,22 @@ def get_full_analysis(input_str, market, i):
         elif not input_str.upper().endswith(".TW"): target_symbol = f"{input_str.upper()}.TW"
     
     ticker_obj = yf.Ticker(target_symbol)
+    
+    tw_manual_names = {
+        "2330.TW": "台積電", "2317.TW": "鴻海", "2454.TW": "聯發科", "2308.TW": "台達電",
+        "2382.TW": "廣達", "2881.TW": "富邦金", "2882.TW": "國泰金", "0050.TW": "元大台灣50",
+        "0056.TW": "元大高股息", "00878.TW": "國泰永續高股息", "00919.TW": "群益台灣精選高息",
+        "00929.TW": "復華台灣科技優息", "2603.TW": "長榮", "2303.TW": "聯電", "2412.TW": "中華電"
+    }
+    
+    stock_name = tw_manual_names.get(target_symbol.upper(), "")
+    if not stock_name:
+        try:
+            info = ticker_obj.info
+            stock_name = info.get('longName', info.get('shortName', ''))
+        except:
+            stock_name = ""
+
     fx_history = yf.download("USDTWD=X", period="max", interval="1d", progress=False)
     if isinstance(fx_history.columns, pd.MultiIndex): fx_history.columns = fx_history.columns.get_level_values(0)
     fx_history.index = pd.to_datetime(fx_history.index).tz_localize(None)
@@ -68,7 +84,7 @@ def get_full_analysis(input_str, market, i):
     dividends = actions['Dividends'][actions['Dividends'] > 0] if not actions.empty and 'Dividends' in actions.columns else ticker_obj.dividends
     if not dividends.empty: dividends.index = pd.to_datetime(dividends.index).tz_localize(None)
 
-    return target_symbol.upper(), df_plot, dividends, fx_history
+    return target_symbol.upper(), stock_name, df_plot, dividends, fx_history
 
 # --- 4. 側邊欄設定 ---
 with st.sidebar:
@@ -125,10 +141,10 @@ if st.session_state.app_mode == "🏠 首頁 (漲跌排行榜)":
             with u_col2: show_clickable_table(us_df.sort_values(by='漲跌幅(%)', ascending=True).head(10), "❄️ 美股跌幅榜", is_us=True)
 
 elif st.session_state.app_mode == "📈 個股深度分析":
-    ticker_symbol, full_data, dividends, fx_history = get_full_analysis(
+    ticker_symbol, stock_name, full_data, dividends, fx_history = get_full_analysis(
         st.session_state.search_input, st.session_state.market_type, interval)
     
-    st.title(f"📈 {ticker_symbol} 深度分析報告")
+    st.title(f"📈 {ticker_symbol} {stock_name} 深度分析報告")
     
     if not full_data.empty:
         full_data['MA_Short'] = full_data['Close'].rolling(window=ma_short_n).mean()
@@ -137,24 +153,20 @@ elif st.session_state.app_mode == "📈 個股深度分析":
         period_map = {"6mo": 126, "1y": 252, "2y": 504, "5y": 1260, "max": len(full_data)}
         plot_data = full_data.tail(period_map.get(period_select, 252)).copy()
 
-        # --- 🌟 新增：針對不同週期的日期 Hover 優化邏輯 ---
         hover_dates = []
         for d in plot_data.index:
             if interval == "1wk":
-                # 計算該週的一與五
                 start_w = d - timedelta(days=d.weekday())
                 end_w = start_w + timedelta(days=4)
                 hover_dates.append(f"{start_w.strftime('%m/%d')} - {end_w.strftime('%m/%d')}")
             elif interval == "1mo":
-                # 顯示該月份
                 hover_dates.append(f"{d.strftime('%Y/%m')}")
             else:
-                # 日線顯示完整日期
                 hover_dates.append(f"{d.strftime('%Y/%m/%d')}")
 
         fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.03, row_width=[0.3, 0.7])
         
-        # 修正後的 K 線 Trace (包含 customdata 與客製化 hovertemplate)
+        # 1. K線 Trace
         fig.add_trace(go.Candlestick(
             x=plot_data.index, 
             open=plot_data['Open'], 
@@ -166,15 +178,24 @@ elif st.session_state.app_mode == "📈 個股深度分析":
             hovertemplate="<b>時間: %{customdata}</b><br>開盤: %{open:.2f}<br>最高: %{high:.2f}<br>最低: %{low:.2f}<br>收盤: %{close:.2f}<extra></extra>"
         ), row=1, col=1)
         
+        # 2. 均線 Trace (hoverinfo="skip" 保持簡潔)
         fig.add_trace(go.Scatter(x=plot_data.index, y=plot_data['MA_Short'], name="短均線", line=dict(color='orange'), hoverinfo="skip"), row=1, col=1)
         fig.add_trace(go.Scatter(x=plot_data.index, y=plot_data['MA_Long'], name="長均線", line=dict(color='cyan'), hoverinfo="skip"), row=1, col=1)
-        fig.add_trace(go.Bar(x=plot_data.index, y=plot_data['Volume'], name="成交量", marker_color="rgba(100,100,100,0.5)", hoverinfo="skip"), row=2, col=1)
+        
+        # 🌟 3. 修改處：成交量 Trace (恢復 hovertemplate 並配合自定義日期)
+        fig.add_trace(go.Bar(
+            x=plot_data.index, 
+            y=plot_data['Volume'], 
+            name="成交量", 
+            marker_color="rgba(100,100,100,0.5)",
+            customdata=hover_dates,
+            hovertemplate="成交量: %{y:,.0f}<extra></extra>"
+        ), row=2, col=1)
         
         fig.update_xaxes(showspikes=True, spikemode='across', spikedash='dash')
         fig.update_layout(xaxis_rangeslider_visible=False, template="plotly_dark", height=800, hovermode="x unified")
         st.plotly_chart(fig, use_container_width=True)
 
-        # --- 配息詳細紀錄 (原本的邏輯) ---
         st.subheader("💰 歷史配息與殖利率")
         if not dividends.empty:
             recent_divs = dividends.sort_index(ascending=False).head(13)
