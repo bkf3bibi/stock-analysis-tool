@@ -10,25 +10,26 @@ from datetime import timedelta
 st.set_page_config(page_title="全球股市 AI 投資助手", layout="wide")
 import streamlit as st
 
-# 僅隱藏右側工具欄，並確保左側按鈕可見
+# 修改原本的 hide_st_style
 hide_st_style = """
             <style>
-            /* 1. 隱藏右側工具欄與 GitHub 連結 */
+            /* 1. 隱藏右側工具列 */
             [data-testid="stToolbar"] {visibility: hidden !important;}
-            .stAppHeader {background: transparent !important;} /* 讓頂部透明但保留按鈕層 */
 
-            /* 2. 強制保留左側側邊欄的收折按鈕 (三條線圖示) */
-            [data-testid="stSidebarCollapsedControl"] {
-                visibility: visible !important;
-                z-index: 999;
-                color: #ff4b4b; /* 這裡可以自訂按鈕顏色 */
+            /* 2. 保留左側收折按鈕 */
+            [data-testid="stSidebarCollapsedControl"] {visibility: visible !important;}
+
+            /* 🌟 3. 將側邊欄內容下移 100 像素 (數值可自行調整) */
+            [data-testid="stSidebarUserContent"] {
+                padding-top: 100px;
             }
 
-            /* 3. 隱藏底部浮水印 */
+            /* 4. 隱藏底部浮水印 */
             footer {visibility: hidden;}
             </style>
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
+
 
 # --- 初始化 Session State ---
 if 'app_mode' not in st.session_state:
@@ -244,6 +245,7 @@ elif st.session_state.app_mode == "📈 個股深度分析":
 
    # D:\行銷科技\python\project\project-2-1.py
    #streamlit run project/project-2-1.py
+
 
 
 
