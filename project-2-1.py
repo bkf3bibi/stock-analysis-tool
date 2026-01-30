@@ -110,6 +110,10 @@ def get_full_analysis(input_str, market, i):
 
 # --- 4. 側邊欄設定 ---
 with st.sidebar:
+    # 增加空白行，每一行約下移一個文字高度
+    st.markdown("<br>" * 5, unsafe_allow_html=True) 
+    
+    # ... 原本的程式碼 ...
     st.header("🚀 功能導航")
     st.session_state.app_mode = st.radio("選擇功能", ["🏠 首頁 (漲跌排行榜)", "📈 個股深度分析"], 
                                          index=0 if st.session_state.app_mode == "🏠 首頁 (漲跌排行榜)" else 1)
@@ -245,6 +249,7 @@ elif st.session_state.app_mode == "📈 個股深度分析":
 
    # D:\行銷科技\python\project\project-2-1.py
    #streamlit run project/project-2-1.py
+
 
 
 
