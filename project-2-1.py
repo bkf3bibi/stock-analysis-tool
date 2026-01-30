@@ -6,36 +6,9 @@ from plotly.subplots import make_subplots
 import numpy as np
 from datetime import timedelta
 
+
 # 頁面配置
 st.set_page_config(page_title="全球股市 AI 投資助手", layout="wide")
-import streamlit as st
-
-hide_st_style = """
-            <style>
-            /* 1. 隱藏右側工具列 */
-            [data-testid="stToolbar"] {visibility: hidden !important;}
-
-            /* 2. 保留收折按鈕 */
-            [data-testid="stSidebarCollapsedControl"] {visibility: visible !important;}
-
-            /* 🌟 3. 強力移動側邊欄內容：直接定位並下移 */
-            [data-testid="stSidebarUserContent"] {
-                padding-top: 0rem !important; /* 取消原本的頂部內距 */
-            }
-            
-            /* 針對側邊欄內的第一個區塊進行精確位移 */
-            div[data-testid="stVerticalBlock"] > div:first-child {
-                margin-top: 65px !important; /* 使用 Margin 強制推下來 */
-            }
-
-            /* 4. 隱藏底部浮水印 */
-            footer {visibility: hidden;}
-            </style>
-            """
-st.markdown(hide_st_style, unsafe_allow_html=True)
-
-
-
 
 # --- 初始化 Session State ---
 if 'app_mode' not in st.session_state:
@@ -116,22 +89,9 @@ def get_full_analysis(input_str, market, i):
 
 # --- 4. 側邊欄設定 ---
 with st.sidebar:
-    # 1. 建立一個容器，專門用來墊高
-    # 大約 3 個 empty 加上一個標題的高度，可以對齊右側標題
-    st.container().write("") 
-    st.container().write("")
-    st.container().write("")
-    
-    # 2. 或是直接用大號的透明字體推擠 (最有效)
-    st.markdown("<h1 style='color: rgba(0,0,0,0); margin: 0; padding: 0;'>Space</h1>", unsafe_allow_html=True)
-    
     st.header("🚀 功能導航")
-    st.session_state.app_mode = st.radio(
-        "選擇功能", 
-        ["🏠 首頁 (漲跌排行榜)", "📈 個股深度分析"], 
-        index=0 if st.session_state.app_mode == "🏠 首頁 (漲跌排行榜)" else 1
-    )
-    # ... 後面維持原樣
+    st.session_state.app_mode = st.radio("選擇功能", ["🏠 首頁 (漲跌排行榜)", "📈 個股深度分析"], 
+                                         index=0 if st.session_state.app_mode == "🏠 首頁 (漲跌排行榜)" else 1)
     
     st.markdown("---")
     if st.session_state.app_mode == "📈 個股深度分析":
@@ -264,12 +224,3 @@ elif st.session_state.app_mode == "📈 個股深度分析":
 
    # D:\行銷科技\python\project\project-2-1.py
    #streamlit run project/project-2-1.py
-
-
-
-
-
-
-
-
-
