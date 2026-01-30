@@ -1,7 +1,7 @@
 # stock-analysis-tool
 🚀 全球股市 AI 投資助手 (Global Stock AI Assistant)
 這是一個基於 Python 與 Streamlit 開發的即時股市分析工具。整合了 Yahoo Finance 數據，提供台股與美股的即時漲跌排行榜、動態 K 線圖、技術指標（均線）以及歷史配息分析。
-https://stock-analysis-tool-2001.streamlit.app/
+👉 [點此開啟：全球股市投資助手 Live Demo](https://stock-analysis-tool-2001.streamlit.app/)
 
 
 ---
