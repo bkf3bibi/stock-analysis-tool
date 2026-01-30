@@ -32,7 +32,7 @@ hide_st_style = """
             footer {visibility: hidden;}
             </style>
             """
-st.markdown(hide_st_style, unsafe_allow_html=True)
+st.markdown(hide_st_style, unsafe_allow_html=True)True)
 
 
 
@@ -116,13 +116,22 @@ def get_full_analysis(input_str, market, i):
 
 # --- 4. 側邊欄設定 ---
 with st.sidebar:
-    # 增加空白行，每一行約下移一個文字高度
-    st.markdown("<br>" * 5, unsafe_allow_html=True) 
+    # 1. 建立一個容器，專門用來墊高
+    # 大約 3 個 empty 加上一個標題的高度，可以對齊右側標題
+    st.container().write("") 
+    st.container().write("")
+    st.container().write("")
     
-    # ... 原本的程式碼 ...
+    # 2. 或是直接用大號的透明字體推擠 (最有效)
+    st.markdown("<h1 style='color: rgba(0,0,0,0); margin: 0; padding: 0;'>Space</h1>", unsafe_allow_html=True)
+    
     st.header("🚀 功能導航")
-    st.session_state.app_mode = st.radio("選擇功能", ["🏠 首頁 (漲跌排行榜)", "📈 個股深度分析"], 
-                                         index=0 if st.session_state.app_mode == "🏠 首頁 (漲跌排行榜)" else 1)
+    st.session_state.app_mode = st.radio(
+        "選擇功能", 
+        ["🏠 首頁 (漲跌排行榜)", "📈 個股深度分析"], 
+        index=0 if st.session_state.app_mode == "🏠 首頁 (漲跌排行榜)" else 1
+    )
+    # ... 後面維持原樣
     
     st.markdown("---")
     if st.session_state.app_mode == "📈 個股深度分析":
@@ -255,6 +264,7 @@ elif st.session_state.app_mode == "📈 個股深度分析":
 
    # D:\行銷科技\python\project\project-2-1.py
    #streamlit run project/project-2-1.py
+
 
 
 
