@@ -33,12 +33,11 @@ if 'search_input' not in st.session_state:
 if 'market_type' not in st.session_state:
     st.session_state.market_type = "台股 (TW)"
 
-# --- 2. 核心邏輯：自動獲取 150 檔排行榜 ---
+# --- 1. 邏輯函數：獲取排行榜 (優化秒開版) ---
 @st.cache_data(ttl=3600)
 def get_market_ranks():
-    # A. 台股自動清單 (50檔熱門ETF + 50檔核心權值股)
-    tw_etf = [f"00{i}.TW" for i in range(50, 100)] 
-    tw_stocks = [
+    # A. 台股熱門 100 檔 (50檔ETF + 50檔權值股)
+    tw_list = [f"00{i}.TW" for i in range(50, 100)] + [
         "2330.TW", "2317.TW", "2454.TW", "2308.TW", "2382.TW", "2881.TW", "2882.TW", "2303.TW", "2412.TW", "1301.TW",
         "2603.TW", "2002.TW", "2357.TW", "3711.TW", "2408.TW", "2886.TW", "2891.TW", "2884.TW", "2609.TW", "2615.TW",
         "2324.TW", "2353.TW", "2376.TW", "3231.TW", "6669.TW", "3034.TW", "3037.TW", "2379.TW", "2345.TW", "1513.TW",
@@ -46,8 +45,8 @@ def get_market_ranks():
         "2618.TW", "2880.TW", "2883.TW", "2885.TW", "2887.TW", "2890.TW", "2892.TW", "5871.TW", "5880.TW", "9904.TW"
     ]
     
-    # B. 美股熱門 50 檔清單
-    us_stocks = [
+    # B. 美股熱門 50 檔
+    us_list = [
         "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "BRK-B", "TSM", "AVGO",
         "COST", "NFLX", "AMD", "INTC", "PYPL", "V", "MA", "JPM", "UNH", "LLY", "ORCL",
         "ADBE", "CRM", "ASML", "PEP", "KO", "CSCO", "TMO", "ABT", "DIS", "NKE", "PFE", 
@@ -57,23 +56,28 @@ def get_market_ranks():
 
     def fetch_fast(symbols, is_tw=False):
         try:
-            # 使用 threads=True 加速下載，period="3d" 確保穩定性
-            data = yf.download(symbols, period="3d", progress=False, threads=True)['Close']
-            if data.empty or len(data) < 2: return pd.DataFrame()
-
-            # 抓取最後兩個有效交易日的價格計算漲跌
-            latest = data.iloc[-1]
-            prev = data.iloc[-2]
-            pct = ((latest - prev) / prev * 100)
+            # 關鍵優化 1：只抓 2 天資料 (最快速度)
+            # 關鍵優化 2：Threads=True 開啟多執行緒並行下載
+            data = yf.download(symbols, period="2d", progress=False, threads=True)['Close']
             
-            df = pct.dropna().reset_index()
-            df.columns = ['代號', '漲跌幅(%)']
-            df['名稱'] = df['代號'].str.replace(".TW", "", regex=False) if is_tw else df['代號']
-            return df[['代號', '名稱', '漲跌幅(%)']]
+            if data.empty: return pd.DataFrame()
+
+            # 確保有兩天的資料可以算變化
+            if len(data) >= 2:
+                latest = data.iloc[-1]
+                prev = data.iloc[-2]
+                pct = ((latest - prev) / prev * 100)
+                
+                df = pct.dropna().reset_index()
+                df.columns = ['代號', '漲跌幅(%)']
+                df['名稱'] = df['代號'].str.replace(".TW", "", regex=False) if is_tw else df['代號']
+                return df[['代號', '名稱', '漲跌幅(%)']]
+            return pd.DataFrame()
         except:
             return pd.DataFrame()
 
-    return fetch_fast(tw_etf + tw_stocks, is_tw=True), fetch_fast(us_stocks)
+    # 同時啟動台股與美股下載
+    return fetch_fast(tw_list, is_tw=True), fetch_fast(us_list)
 
 # --- 3. 數據處理：個股深度分析 ---
 @st.cache_data(ttl=3600)
@@ -197,3 +201,4 @@ elif st.session_state.app_mode == "📈 個股深度分析":
                 st.table(recent_divs)
         else:
             st.error("查無數據，請確認代號是否正確。")
+
